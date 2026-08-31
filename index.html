@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz de Capitales</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F1ECDD;
+    --paper-edge:#E6DFCB;
+    --ink:#1E2A44;
+    --ink-soft:#4A5670;
+    --air-red:#C1272D;
+    --air-blue:#1B4F91;
+    --sepia:#8B5E34;
+    --ok:#3E7C59;
+    --bad:#B23A32;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+    background:var(--paper-edge);
+    display:flex;
+    justify-content:center;
+    padding:24px 12px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+
+  .frame{
+    width:100%;
+    max-width:560px;
+    padding:9px;
+    background:repeating-linear-gradient(
+      45deg,
+      var(--air-red) 0px 10px,
+      var(--paper) 10px 20px,
+      var(--air-blue) 20px 30px,
+      var(--paper) 30px 40px
+    );
+    border-radius:18px;
+  }
+  .card{
+    background:var(--paper);
+    border-radius:14px;
+    padding:28px 26px 32px;
+    position:relative;
+    overflow:hidden;
+    box-shadow: inset 0 0 0 1px rgba(30,42,68,0.08);
+  }
+
+  .eyebrow{
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    text-align:center;
+    margin-bottom:6px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:900;
+    font-size:clamp(26px,6vw,34px);
+    text-align:center;
+    margin:0 0 4px;
+    letter-spacing:-0.01em;
+  }
+  .subtitle{
+    text-align:center;
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-bottom:20px;
+  }
+
+  .stamps{
+    display:flex;
+    justify-content:center;
+    gap:7px;
+    margin-bottom:22px;
+    flex-wrap:wrap;
+  }
+  .stamp-dot{
+    width:15px;height:15px;
+    border-radius:50%;
+    border:1.5px solid var(--ink-soft);
+    opacity:.4;
+    transition:all .25s ease;
+  }
+  .stamp-dot.answered{opacity:1; border-style:solid;}
+  .stamp-dot.ok{background:var(--ok); border-color:var(--ok);}
+  .stamp-dot.bad{background:var(--bad); border-color:var(--bad);}
+  .stamp-dot.current{opacity:1; transform:scale(1.25); border-color:var(--sepia);}
+
+  .postmark{
+    width:56px;height:56px;
+    border-radius:50%;
+    border:2px dashed var(--sepia);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'Space Mono',monospace;
+    font-weight:700;
+    font-size:17px;
+    color:var(--sepia);
+    margin:0 auto 16px;
+    transform:rotate(-6deg);
+    transition:transform .2s ease;
+  }
+  .postmark.stamped{
+    animation:thump .38s ease;
+  }
+  .postmark.ok{border-color:var(--ok); color:var(--ok); border-style:solid;}
+  .postmark.bad{border-color:var(--bad); color:var(--bad); border-style:solid;}
+  @keyframes thump{
+    0%{transform:rotate(-6deg) scale(1);}
+    40%{transform:rotate(-10deg) scale(1.35);}
+    100%{transform:rotate(-6deg) scale(1);}
+  }
+
+  .question{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(18px,4.2vw,21px);
+    text-align:center;
+    margin:0 0 22px;
+    line-height:1.35;
+  }
+
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:11px;
+    margin-bottom:8px;
+  }
+  .option{
+    display:flex;
+    align-items:stretch;
+    border:1.5px solid var(--ink);
+    border-radius:10px;
+    background:var(--paper);
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    color:var(--ink);
+    text-align:left;
+    overflow:hidden;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .option:hover:not(:disabled){
+    transform:translateY(-2px);
+    box-shadow:0 4px 0 rgba(30,42,68,0.12);
+  }
+  .option:disabled{cursor:default;}
+  .option:focus-visible{outline:2px solid var(--air-blue); outline-offset:2px;}
+  .opt-letter{
+    font-family:'Space Mono',monospace;
+    font-weight:700;
+    width:40px;
+    flex:0 0 40px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-right:1.5px dashed var(--ink);
+    background:rgba(30,42,68,0.04);
+  }
+  .opt-text{padding:12px 14px; flex:1;}
+
+  .option.correct{background:rgba(62,124,89,0.16); border-color:var(--ok);}
+  .option.correct .opt-letter{border-color:var(--ok); color:var(--ok);}
+  .option.incorrect{background:rgba(178,58,50,0.14); border-color:var(--bad);}
+  .option.incorrect .opt-letter{border-color:var(--bad); color:var(--bad);}
+
+  .fact{
+    font-family:'Space Mono',monospace;
+    font-size:12.5px;
+    color:var(--sepia);
+    text-align:center;
+    margin:14px 0 4px;
+    min-height:16px;
+    line-height:1.5;
+  }
+
+  .next-btn{
+    display:block;
+    margin:18px auto 0;
+    font-family:'Space Mono',monospace;
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--paper);
+    background:var(--ink);
+    border:none;
+    padding:12px 26px;
+    border-radius:999px;
+    cursor:pointer;
+    opacity:0;
+    transform:translateY(6px);
+    transition:opacity .2s ease, transform .2s ease;
+  }
+  .next-btn.show{opacity:1; transform:translateY(0);}
+  .next-btn:hover{background:var(--air-blue);}
+  .next-btn:focus-visible{outline:2px solid var(--air-red); outline-offset:2px;}
+
+  .results{display:none; text-align:center;}
+  .results.show{display:block;}
+  .results .postmark{width:78px; height:78px; font-size:26px; margin-bottom:18px;}
+  .boarding{
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  .score-big{
+    font-family:'Fraunces',serif;
+    font-weight:900;
+    font-size:clamp(40px,10vw,58px);
+    margin:6px 0 2px;
+  }
+  .rank{
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-size:19px;
+    color:var(--sepia);
+    margin-bottom:6px;
+  }
+  .rank-desc{font-size:13.5px; color:var(--ink-soft); margin-bottom:22px; line-height:1.5;}
+  .retry-btn{
+    font-family:'Space Mono',monospace;
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--ink);
+    background:transparent;
+    border:1.5px dashed var(--ink);
+    padding:11px 24px;
+    border-radius:999px;
+    cursor:pointer;
+  }
+  .retry-btn:hover{border-color:var(--air-blue); color:var(--air-blue);}
+  .retry-btn:focus-visible{outline:2px solid var(--air-red); outline-offset:2px;}
+
+  .quiz-body.hidden{display:none;}
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <div class="card">
+    <div class="eyebrow">✈ correo aéreo · geografía mundial</div>
+    <h1>Quiz de Capitales</h1>
+    <div class="subtitle">8 escalas. Comprueba si tu pasaporte mental está al día.</div>
+
+    <div class="stamps" id="stamps"></div>
+
+    <div class="quiz-body" id="quizBody">
+      <div class="postmark" id="postmark">01</div>
+      <div class="question" id="questionText"></div>
+      <div class="options" id="options"></div>
+      <div class="fact" id="fact"></div>
+      <button class="next-btn" id="nextBtn">Siguiente escala →</button>
+    </div>
+
+    <div class="results" id="results">
+      <div class="postmark" id="finalPostmark">✓</div>
+      <div class="boarding">tarjeta de embarque · resultado final</div>
+      <div class="score-big" id="scoreBig">0/8</div>
+      <div class="rank" id="rank"></div>
+      <div class="rank-desc" id="rankDesc"></div>
+      <button class="retry-btn" id="retryBtn">Volar otra vez</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    q: "¿Cuál es la capital de Australia?",
+    options: ["Sídney", "Melbourne", "Canberra", "Perth"],
+    correct: 2,
+    fact: "Canberra fue diseñada desde cero en 1913, precisamente para no favorecer a Sídney ni a Melbourne."
+  },
+  {
+    q: "¿Cuál es la capital de Canadá?",
+    options: ["Toronto", "Vancouver", "Ottawa", "Montreal"],
+    correct: 2,
+    fact: "Ottawa se eligió en 1857 por estar justo en la frontera entre las zonas de habla inglesa y francesa."
+  },
+  {
+    q: "¿Cuál es la capital de Turquía?",
+    options: ["Estambul", "Ankara", "Esmirna", "Antalya"],
+    correct: 1,
+    fact: "Ankara sustituyó a Estambul como capital en 1923, tras la fundación de la República."
+  },
+  {
+    q: "¿Cuál es la capital administrativa de Sudáfrica?",
+    options: ["Johannesburgo", "Ciudad del Cabo", "Durban", "Pretoria"],
+    correct: 3,
+    fact: "Sudáfrica reparte el poder en tres ciudades: Pretoria (ejecutiva), Ciudad del Cabo (legislativa) y Bloemfontein (judicial)."
+  },
+  {
+    q: "¿Cuál es la capital de Suiza?",
+    options: ["Zúrich", "Ginebra", "Berna", "Basilea"],
+    correct: 2,
+    fact: "Berna es la capital de facto: la Constitución suiza no nombra oficialmente ninguna ciudad capital."
+  },
+  {
+    q: "¿Cuál es la capital de Marruecos?",
+    options: ["Casablanca", "Marrakech", "Rabat", "Fez"],
+    correct: 2,
+    fact: "Rabat es capital desde 1912, aunque Casablanca sigue siendo la ciudad más grande y el motor económico."
+  },
+  {
+    q: "¿Cuál es la capital de Brasil?",
+    options: ["Río de Janeiro", "São Paulo", "Brasilia", "Salvador"],
+    correct: 2,
+    fact: "Brasilia se construyó en apenas 41 meses y sustituyó a Río de Janeiro como capital en 1960."
+  },
+  {
+    q: "¿Cuál es la capital de Nueva Zelanda?",
+    options: ["Auckland", "Wellington", "Christchurch", "Hamilton"],
+    correct: 1,
+    fact: "Wellington es capital desde 1865, aunque Auckland tiene mucha más población y suele llevarse la fama."
+  }
+];
+
+let current = 0;
+let score = 0;
+let answered = false;
+
+const stampsEl = document.getElementById('stamps');
+const postmarkEl = document.getElementById('postmark');
+const questionEl = document.getElementById('questionText');
+const optionsEl = document.getElementById('options');
+const factEl = document.getElementById('fact');
+const nextBtn = document.getElementById('nextBtn');
+const quizBody = document.getElementById('quizBody');
+const resultsEl = document.getElementById('results');
+
+function buildStamps(){
+  stampsEl.innerHTML = '';
+  questions.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'stamp-dot';
+    dot.id = 'dot-' + i;
+    stampsEl.appendChild(dot);
+  });
+}
+
+function renderQuestion(){
+  answered = false;
+  const item = questions[current];
+  postmarkEl.textContent = String(current + 1).padStart(2, '0');
+  postmarkEl.className = 'postmark';
+  questionEl.textContent = item.q;
+  factEl.textContent = '';
+  nextBtn.classList.remove('show');
+  nextBtn.textContent = current === questions.length - 1 ? 'Ver resultado final →' : 'Siguiente escala →';
+
+  optionsEl.innerHTML = '';
+  item.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.innerHTML = `<span class="opt-letter">${String.fromCharCode(65 + i)}</span><span class="opt-text">${opt}</span>`;
+    btn.addEventListener('click', () => selectAnswer(i, btn));
+    optionsEl.appendChild(btn);
+  });
+
+  document.querySelectorAll('.stamp-dot').forEach((d, i) => {
+    d.classList.remove('current');
+    if (i === current) d.classList.add('current');
+  });
+}
+
+function selectAnswer(i, btn){
+  if (answered) return;
+  answered = true;
+  const item = questions[current];
+  const isCorrect = i === item.correct;
+
+  document.querySelectorAll('.option').forEach(b => b.disabled = true);
+
+  if (isCorrect){
+    btn.classList.add('correct');
+    score++;
+  } else {
+    btn.classList.add('incorrect');
+    optionsEl.children[item.correct].classList.add('correct');
+  }
+
+  postmarkEl.classList.add('stamped', isCorrect ? 'ok' : 'bad');
+  postmarkEl.textContent = isCorrect ? '✓' : '✕';
+
+  const dot = document.getElementById('dot-' + current);
+  dot.classList.add('answered', isCorrect ? 'ok' : 'bad');
+
+  factEl.textContent = item.fact;
+  nextBtn.classList.add('show');
+}
+
+nextBtn.addEventListener('click', () => {
+  current++;
+  if (current < questions.length){
+    renderQuestion();
+  } else {
+    showResults();
+  }
+});
+
+function showResults(){
+  quizBody.classList.add('hidden');
+  resultsEl.classList.add('show');
+
+  document.getElementById('scoreBig').textContent = score + '/' + questions.length;
+
+  const fp = document.getElementById('finalPostmark');
+  const rank = document.getElementById('rank');
+  const desc = document.getElementById('rankDesc');
+
+  if (score === questions.length){
+    fp.classList.add('ok'); fp.textContent = '✓';
+    rank.textContent = 'Diplomático mundial';
+    desc.textContent = 'Pleno absoluto. Tu pasaporte mental no necesita renovación.';
+  } else if (score >= 6){
+    fp.classList.add('ok'); fp.textContent = '✓';
+    rank.textContent = 'Trotamundos experto';
+    desc.textContent = 'Muy sólido. Se te escapan pocas escalas del recorrido.';
+  } else if (score >= 3){
+    rank.textContent = 'Viajero con brújula';
+    desc.textContent = 'Vas bien orientado, aunque conviene repasar el mapa.';
+  } else {
+    fp.classList.add('bad'); fp.textContent = '✕';
+    rank.textContent = 'Aprendiz de mapamundi';
+    desc.textContent = 'Toca sacar el atlas. Cada vuelo empieza con una primera escala.';
+  }
+}
+
+document.getElementById('retryBtn').addEventListener('click', () => {
+  current = 0;
+  score = 0;
+  resultsEl.classList.remove('show');
+  quizBody.classList.remove('hidden');
+  document.getElementById('finalPostmark').classList.remove('ok','bad');
+  buildStamps();
+  renderQuestion();
+});
+
+buildStamps();
+renderQuestion();
+</script>
+
+</body>
+</html>

@@ -152,24 +152,53 @@
   cursor: pointer;
   background: #fff;
   border: 1px solid var(--a1-ink-75);
-  border-left: 3px solid var(--a1-blue-pale);
   border-radius: var(--r-lg);
   padding: 14px 16px;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 14px;
   font-family: var(--font-sans);
   transition: box-shadow var(--dur-sm) var(--ease-standard),
     border-color var(--dur-sm) var(--ease-standard);
 }
-.fyd-item:hover { border-left-color: var(--a1-blue-midnight); box-shadow: var(--shadow-2); }
+.fyd-item:hover { border-color: var(--a1-blue-midnight); box-shadow: var(--shadow-2); }
+.fyd-item__badge {
+  flex: none;
+  min-width: 58px;
+  padding: 7px 9px;
+  border-radius: var(--r-md);
+  background: var(--a1-blue-ice);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+.fyd-item__dow {
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  font-weight: var(--fw-semibold);
+  color: var(--a1-blue-sky);
+}
+.fyd-item__dnum {
+  font-size: 24px;
+  line-height: 1.05;
+  font-weight: var(--fw-semibold);
+  color: var(--a1-blue-midnight);
+}
+.fyd-item__mon {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--a1-blue-sky);
+}
+.fyd-item__meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .fyd-item__city {
   font-size: var(--fs-body-md);
   font-weight: var(--fw-semibold);
   color: var(--a1-blue-midnight);
 }
-.fyd-item__date { font-size: var(--fs-caption); color: var(--a1-ink-500); }
-.fyd-item__time { font-size: var(--fs-caption); color: var(--a1-ink-400); white-space: pre-line; }
+.fyd-item__country { font-size: var(--fs-caption); color: var(--a1-ink-400); }
 
 /* Detail card -------------------------------------------------------------- */
 .fyd-card {
@@ -674,6 +703,19 @@
     return [one(m[1], m[2], 0), one(m[3], m[4], 1)];
   }
 
+  // "Mon 6 October" -> { dow: "Mon", dnum: "6", mon: "Oct" } for the date badge
+  function dayParts(c) {
+    const parts = (c.date || "").match(/([A-Za-z]{3,})\s+(\d{1,2})/g) || [];
+    const dows = [], days = [];
+    parts.forEach((s) => {
+      const p = s.split(/\s+/);
+      dows.push(p[0].slice(0, 3));
+      days.push(p[1]);
+    });
+    const mon = ((c.date || "").match(/([A-Za-z]{3,})\s*$/) || [, ""])[1].slice(0, 3);
+    return { dow: dows.join("\u2013") || "\u2014", dnum: days.join("\u2013") || "\u2014", mon: mon };
+  }
+
   function FindYourDate(root) {
     const cities = window.SNACK_CITIES || [];
     const mapsHost = root.querySelector("[data-fyd-maps]");
@@ -699,15 +741,25 @@
       });
     }
 
-    // --- all dates list ----------------------------------------------------
+    // --- all dates list (day-first cards) -----------------------------------
     if (listHost) {
       cities.flatMap(splitDays).forEach((c) => {
+        const d = dayParts(c);
         const b = el("button", "fyd-item");
         b.type = "button";
         b.dataset.city = c.id;
-        b.appendChild(el("span", "fyd-item__city", c.city));
-        b.appendChild(el("span", "fyd-item__date", c.date));
-        b.appendChild(el("span", "fyd-item__time", c.time));
+
+        const badge = el("span", "fyd-item__badge");
+        badge.appendChild(el("span", "fyd-item__dow", d.dow));
+        badge.appendChild(el("span", "fyd-item__dnum", d.dnum));
+        badge.appendChild(el("span", "fyd-item__mon", d.mon));
+        b.appendChild(badge);
+
+        const meta = el("span", "fyd-item__meta");
+        meta.appendChild(el("span", "fyd-item__city", c.city));
+        meta.appendChild(el("span", "fyd-item__country", c.country));
+        b.appendChild(meta);
+
         b.addEventListener("click", (ev) => pick(c.id, ev));
         listHost.appendChild(b);
       });
@@ -816,3 +868,4 @@
 <template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#122B54"/><circle cx="34" cy="42" r="6" fill="#fff"/><circle cx="58" cy="34" r="6" fill="#13A0D3"/><circle cx="50" cy="62" r="6" fill="#fff"/><rect x="26" y="76" width="48" height="4" rx="2" fill="#6590BD"/></svg></template>
 </body>
 </html>
+
